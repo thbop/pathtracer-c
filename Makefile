@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Iinclude -std=c23
+CFLAGS = -Wall -Iinclude -std=c23 -g
 CLIB = -Llib -lSDL3
 
 all: always main
