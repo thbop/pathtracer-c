@@ -1,0 +1,4 @@
+/include/SDL3
+/bin
+/lib
+*.dll
