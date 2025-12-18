@@ -1,5 +1,9 @@
 #include "SDL3/SDL.h"
 
+#include "vec3.h"
+#include "ray.h"
+#include "camera.h"
+
 #define RENDER_WIDTH  320
 #define RENDER_HEIGHT 180
 #define WINDOW_WIDTH  RENDER_WIDTH * 4
@@ -21,19 +25,20 @@ static struct {
 
 static int SDLCALL render( void *surface ) {
     SDL_Surface *surf = surface;
-    float
-        dx = 1.0f / (float)surf->w,
-        dy = 1.0f / (float)surf->h,
-        x  = 0.0f,
-        y  = 0.0f;
+    camera_t camera = {
+        .origin = VEC3_ZERO,
+        .width  = RENDER_WIDTH,
+        .height = RENDER_HEIGHT,
+        .fov    = 120.0f,
+    };
+    camera_compute_focal_length( &camera );
     
+    ray_t ray;
     for ( int j = 0; j < surf->h; j++ ) {
         for ( int i = 0; i < surf->w; i++ ) {
-            x += dx;
-            SDL_WriteSurfacePixelFloat( surf, i, j, x, y, SDL_fabsf( SDL_sinf( (x + y)*2 ) ), 1.0f );
+            camera_generate_ray( &ray, &camera, i, j );
+            SDL_WriteSurfacePixelFloat( surf, i, j, ray.direction.x, ray.direction.y, ray.direction.z, 1.0f );
         }
-        x = 0.0f;
-        y += dy;
     }
     
     SDL_SetAtomicInt( &state.render_progress, 100 );
@@ -75,8 +80,13 @@ int main() {
     while ( running ) {
         SDL_Event event;
         while ( SDL_PollEvent( &event ) ) {
-            if ( event.type == SDL_EVENT_QUIT ) {
-                running = false;
+            switch ( event.type ) {
+                case SDL_EVENT_QUIT:
+                    running = false;
+                    break;
+                case SDL_EVENT_KEY_DOWN:
+                    if ( SDL_GetAtomicInt( &state.render_progress ) == 100 )
+                        render_call();
             }
         }
 
