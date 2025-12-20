@@ -45,6 +45,28 @@ static struct {
     SDL_AtomicInt render_progress;
 } state;
 
+vec3 ray_hit( ray_t *ray ) {
+    vec3 sphere_origin = { 0.0, 0.0, 10.0 };
+    float sphere_radius = 4.0f;
+
+    vec3 diff = vec3_sub( &ray->origin, &sphere_origin );
+    float
+        a = vec3_dot( &ray->direction, &ray->direction ),
+        b = 2.0f * vec3_dot( &diff, &ray->direction ),
+        c = vec3_dot( &diff, &diff ) - sphere_radius*sphere_radius;
+    
+    float discriminant = b*b - 4*a*c;
+    if ( discriminant > 0 ) { // If hit
+        // float t = ( -b - SDL_sqrtf( discriminant ) ) / ( 2*a );
+        // vec3
+        //     hit_position = ray_at( ray, t ),
+        //     hit_normal   = vec3_point_to( &sphere_origin, &hit_position );
+        return (vec3){ 1.0, 0.0, 0.0 };
+    }
+    // Otherwise
+    return VEC3_ZERO;
+}
+
 static int SDLCALL render( void *surface ) {
     SDL_Surface *surf = surface;
     camera_t camera = {
@@ -59,7 +81,8 @@ static int SDLCALL render( void *surface ) {
     for ( int j = 0; j < surf->h; j++ ) {
         for ( int i = 0; i < surf->w; i++ ) {
             camera_generate_ray( &ray, &camera, i, j );
-            SDL_WriteSurfacePixelFloat( surf, i, j, ray.direction.x, ray.direction.y, ray.direction.z, 1.0f );
+            vec3 color = ray_hit( &ray );
+            SDL_WriteSurfacePixelFloat( surf, i, j, color.x, color.y, color.z, 1.0f );
         }
     }
     
@@ -94,6 +117,7 @@ int main() {
         SDL_TEXTUREACCESS_STREAMING,
         RENDER_WIDTH, RENDER_HEIGHT
     ) );
+    SDL_SetTextureScaleMode( state.texture, SDL_SCALEMODE_NEAREST );
 
     render_call();
 
