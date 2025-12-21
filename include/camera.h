@@ -42,8 +42,8 @@ void camera_compute_focal_length( camera_t *camera ) {
 
 void camera_generate_ray( ray_t *ray, camera_t *camera, float x, float y ) {
     vec3 pixel_pos = {
-        x - camera->width  * 0.5f,
-        y - camera->height * 0.5f,
+        x - camera->width * 0.5f,
+        - y + camera->height * 0.5f,
         camera->focal_length
     };
 

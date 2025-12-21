@@ -20,16 +20,23 @@
 * SOFTWARE.
 */
 
+#include "stdio.h"
 #include "SDL3/SDL.h"
 
 #include "vec3.h"
 #include "ray.h"
 #include "camera.h"
 
-#define RENDER_WIDTH  320
-#define RENDER_HEIGHT 180
-#define WINDOW_WIDTH  RENDER_WIDTH * 4
-#define WINDOW_HEIGHT RENDER_HEIGHT * 4
+#if __INTELLISENSE__
+    #define constexpr
+#endif
+
+#define RENDER_WIDTH      1280
+#define RENDER_HEIGHT     720
+#define WINDOW_WIDTH      1280
+#define WINDOW_HEIGHT     720
+#define PIXEL_SUBDIVISION 2
+
 
 #define SDL_ASSERT( expr ) \
     if ( !( expr ) ) \
@@ -46,6 +53,8 @@ static struct {
 } state;
 
 vec3 ray_hit( ray_t *ray ) {
+    // return (vec3){ ray->direction.y, ray->direction.y, ray->direction.y };
+
     vec3 sphere_origin = { 0.0, 0.0, 10.0 };
     float sphere_radius = 4.0f;
 
@@ -64,7 +73,7 @@ vec3 ray_hit( ray_t *ray ) {
         return (vec3){ 1.0, 0.0, 0.0 };
     }
     // Otherwise
-    return VEC3_ZERO;
+    return (vec3){ 0.78f, 0.78f, 0.8f };
 }
 
 static int SDLCALL render( void *surface ) {
@@ -76,17 +85,29 @@ static int SDLCALL render( void *surface ) {
         .fov    = 120.0f,
     };
     camera_compute_focal_length( &camera );
+
+    float subpixel_size = 1.0f / PIXEL_SUBDIVISION;
     
     ray_t ray;
     for ( int j = 0; j < surf->h; j++ ) {
         for ( int i = 0; i < surf->w; i++ ) {
-            camera_generate_ray( &ray, &camera, i, j );
-            vec3 color = ray_hit( &ray );
+            vec3 color = VEC3_ZERO;
+            for ( int s_j = 0; s_j < PIXEL_SUBDIVISION; s_j++ ) {
+                for ( int s_i = 0; s_i < PIXEL_SUBDIVISION; s_i++ ) {
+                    camera_generate_ray( &ray, &camera, i + s_i * subpixel_size, j + s_j * subpixel_size );
+                    vec3 raw_ray_color = ray_hit( &ray );
+                    color = vec3_add( &color, &raw_ray_color );
+                }
+            }
+            color = vec3_mul_value( &color, subpixel_size );
             SDL_WriteSurfacePixelFloat( surf, i, j, color.x, color.y, color.z, 1.0f );
         }
+
+        // Update progress
+        SDL_SetAtomicInt( &state.render_progress, ( j * 25 ) / surf->h );
     }
     
-    SDL_SetAtomicInt( &state.render_progress, 100 );
+    SDL_SetAtomicInt( &state.render_progress, 25 );
 
     return 0;
 }
@@ -100,6 +121,20 @@ void render_call() {
 
 void render_finish() {
     SDL_UnlockTexture( state.texture );
+}
+
+void display_progress() {
+    int progress = SDL_GetAtomicInt( &state.render_progress );
+    if ( progress < 25 ) {
+        printf( "\rProgress: [" );
+        for ( int i = 0; i < 25; i++ ) {
+            if ( i <= progress )
+                putchar( '=' );
+            else
+                putchar( ' ' );
+        }
+        putchar( ']' );
+    }
 }
 
 int main() {
@@ -131,12 +166,12 @@ int main() {
                     running = false;
                     break;
                 case SDL_EVENT_KEY_DOWN:
-                    if ( SDL_GetAtomicInt( &state.render_progress ) == 100 )
+                    if ( SDL_GetAtomicInt( &state.render_progress ) >= 25 )
                         render_call();
             }
         }
 
-        if ( SDL_GetAtomicInt( &state.render_progress ) == 100 )
+        if ( SDL_GetAtomicInt( &state.render_progress ) >= 25 )
             render_finish();
 
         // Clear screen
@@ -146,6 +181,8 @@ int main() {
         // Present changes on the screen
         SDL_RenderTexture( state.renderer, state.texture, NULL, NULL );
         SDL_RenderPresent( state.renderer );
+
+        display_progress();
     }
 
     // Cleanup

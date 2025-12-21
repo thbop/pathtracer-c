@@ -132,4 +132,12 @@ vec3 vec3_point_to( vec3 *start, vec3 *target ) {
     return vec3_normalize( &difference );
 }
 
+vec3 vec3_lerp( vec3 *a, vec3 *b, float t ) {
+    t = SDL_clamp( t, 0.0f, 1.0f );
+    vec3
+        a_weight = vec3_mul_value( a, ( 1.0f - t ) ),
+        b_weight = vec3_mul_value( b, t );
+    return vec3_add( &a_weight, &b_weight );
+}
+
 #endif
