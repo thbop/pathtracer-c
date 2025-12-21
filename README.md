@@ -28,7 +28,6 @@ Writing another pathtracer in C.
     <summary>Chapter 3</summary>
     <img src="images/3_antialiasing.png" />
     <img src="images/3.png" />
-
     <p>In this section, I upscaled the render output, flipped the vertical axis right-side-up, and implemented configurable subpixel rays for antialiasing.</p>
 </details>
 
