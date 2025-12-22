@@ -23,6 +23,8 @@
 #include "stdio.h"
 #include "SDL3/SDL.h"
 
+#include "list_t.h"
+
 #include "vec3.h"
 #include "ray.h"
 #include "camera.h"
@@ -52,12 +54,11 @@ static struct {
     SDL_Texture *texture;
     SDL_Surface *screen;
 
+    list_t shapes;
+
     SDL_AtomicInt render_progress;
 } state;
 
-// TEMP
-static shape_sphere_data_t sphere_data;
-static shape_t sphere;
 
 vec3 ray_hit( ray_path_t *ray_path ) {
     if ( ray_path->bounces == 0 )
@@ -65,8 +66,11 @@ vec3 ray_hit( ray_path_t *ray_path ) {
 
     ray_path->bounces--;
 
-    if ( sphere.hit( &sphere, ray_path ) ) {
-        return sphere.material.processor( &sphere.material, ray_path );
+    list_foreach( state.shapes, it ) {
+        shape_t *shape = it->value;
+        if ( shape->hit( shape, ray_path ) ) {
+            return shape->material.processor( &shape->material, ray_path );
+        }
     }
     
     // Otherwise
@@ -153,17 +157,35 @@ int main() {
     ) );
     SDL_SetTextureScaleMode( state.texture, SDL_SCALEMODE_NEAREST );
 
+    state.shapes = new_list();
+
     // TEMP
-    sphere_data.radius = 4.0f;
+    shape_sphere_data_t sphere_data;
+    shape_t sphere;
+
+    sphere_data.radius = 1000.0f;
     sphere = (shape_t){
-        .position = { 0.0f, 0.0f, 10.0f },
-        .data     = &sphere_data,
+        .position = { 0.0f, -1004.0f, 10.0f },
+        .data     = qalloc( sphere_data ),
         .material = {
-            .color     = { 0.4, 0.5, 0.3 },
+            .color     = { 0.4f, 0.4f, 0.4f },
             .processor = material_diffuse,
         },
         .hit = shape_sphere_hit,
     };
+    list_append( state.shapes, sphere );
+
+    sphere_data.radius = 4.0f;
+    sphere = (shape_t){
+        .position = { 0.0f, 0.0f, 10.0f },
+        .data     = qalloc( sphere_data ),
+        .material = {
+            .color     = { 0.4f, 0.5f, 0.3f },
+            .processor = material_diffuse,
+        },
+        .hit = shape_sphere_hit,
+    };
+    list_append( state.shapes, sphere );
 
     render_call();
 
@@ -197,6 +219,12 @@ int main() {
     }
 
     // Cleanup
+    list_foreach( state.shapes, it ) {
+        shape_t* shape = it->value;
+        free( shape->data );
+    }
+    list_free( state.shapes );
+
     SDL_DestroyRenderer( state.renderer );
     SDL_DestroyWindow( state.window );
     SDL_Quit();

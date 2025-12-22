@@ -44,3 +44,9 @@ Writing another pathtracer in C.
     <p>In this section, I refactored the intersection tests and material properties into separate classes. Shapes and materials ought to be more extendable.</p>
 </details>
 
+<details>
+    <summary>Chapter 6</summary>
+    <img src="images/6.png" />
+    <p>Successful render of multiple spheres, though light does not appear to be behaving as expected.</p>
+</details>
+
