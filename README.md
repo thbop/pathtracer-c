@@ -50,3 +50,9 @@ Writing another pathtracer in C.
     <p>Successful render of multiple spheres, though light does not appear to be behaving as expected.</p>
 </details>
 
+<details>
+    <summary>Chapter 7</summary>
+    <img src="images/7.png" />
+    <p>Fixed some mistaken math and made rays sort objects better. Now it is kind of rendering, though I believe the green sphere should not be that flat.</p>
+</details>
+

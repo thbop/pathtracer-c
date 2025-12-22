@@ -41,7 +41,7 @@
 #define WINDOW_HEIGHT     720
 #define RENDER_WIDTH      1280  // Upscaled to window size
 #define RENDER_HEIGHT     720
-#define PIXEL_SUBDIVISION 2    // Antialiasing (1 = none)
+#define PIXEL_SUBDIVISION 16    // Antialiasing (1 = none)
 #define RAY_MAX_BOUNCES   10
 
 
@@ -82,7 +82,10 @@ vec3 ray_hit( ray_path_t *ray_path ) {
 
     if ( closest_t < __FLT32_MAX__ ) {
         ray_path->ray.origin = ray_at( &ray_path->ray, closest_t );
-        return closest_shape->material.processor( &closest_shape->material, ray_path );
+        vec3
+            this_color = closest_shape->material.processor( &closest_shape->material, ray_path ),
+            next_color = ray_hit( ray_path );
+        return vec3_mul( &this_color, &next_color );
     }
     // Otherwise
     return (vec3){ 0.68f, 0.68f, 0.70f };
@@ -98,7 +101,7 @@ static int SDLCALL render( void *surface ) {
     };
     camera_compute_focal_length( &camera );
 
-    float subpixel_size = 1.0f / PIXEL_SUBDIVISION;
+    float subpixel_size = 1.0f / ( PIXEL_SUBDIVISION*PIXEL_SUBDIVISION );
     
     for ( int j = 0; j < surf->h; j++ ) {
         for ( int i = 0; i < surf->w; i++ ) {
@@ -155,7 +158,7 @@ int main() {
     // Setup
     SDL_ASSERT( SDL_Init( SDL_INIT_VIDEO ) );
     SDL_ASSERT( SDL_CreateWindowAndRenderer(
-        "Pathtacer",
+        "Pathtracer",
         WINDOW_WIDTH, WINDOW_HEIGHT, 0,
         &state.window,
         &state.renderer
