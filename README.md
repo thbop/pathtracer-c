@@ -31,3 +31,9 @@ Writing another pathtracer in C.
     <p>In this section, I upscaled the render output, flipped the vertical axis right-side-up, and implemented configurable subpixel rays for antialiasing.</p>
 </details>
 
+<details>
+    <summary>Chapter 4</summary>
+    <img src="images/4.png" />
+    <p>In this section, I started bouncing light.</p>
+</details>
+
