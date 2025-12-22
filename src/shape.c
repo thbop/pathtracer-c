@@ -20,22 +20,26 @@
 * SOFTWARE.
 */
 
-#ifndef RAY_H
-#define RAY_H
+#include "shape.h"
 
-#include "vec3.h"
+bool shape_sphere_hit( void *shape, ray_path_t *ray_path ) {
+    shape_t *sh = shape;
 
-typedef struct {
-    vec3 origin, direction;
-} ray_t;
+    shape_sphere_data_t *sphere_data = sh->data;
 
-typedef struct {
-    ray_t ray;
-    vec3 hit_normal;
-    int bounces;
-} ray_path_t;
-
-
-vec3 ray_at( ray_t *ray, float t );
-
-#endif
+    vec3 diff = vec3_sub( &ray_path->ray.origin, &sh->position );
+    float
+        b = 2.0f * vec3_dot( &diff, &ray_path->ray.direction ),
+        c = vec3_square_length( &diff ) - sphere_data->radius*sphere_data->radius,
+        discriminant = b*b - 4.0f*c;
+    
+    if ( discriminant > 0 ) { // If hit (positive or negative)
+        float t = ( -b - SDL_sqrtf( discriminant ) ) / 2.0f;
+        if ( t > 0.0f ) { // If positive
+            ray_path->ray.origin = ray_at( &ray_path->ray, t );
+            ray_path->hit_normal = vec3_point_to( &sh->position, &ray_path->ray.origin );
+            return true;
+        }
+    }
+    return false;
+}

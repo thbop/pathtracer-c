@@ -20,22 +20,15 @@
 * SOFTWARE.
 */
 
-#ifndef RAY_H
-#define RAY_H
-
-#include "vec3.h"
-
-typedef struct {
-    vec3 origin, direction;
-} ray_t;
-
-typedef struct {
-    ray_t ray;
-    vec3 hit_normal;
-    int bounces;
-} ray_path_t;
+#include "materials.h"
 
 
-vec3 ray_at( ray_t *ray, float t );
+vec3 material_diffuse( void *material, ray_path_t *ray_path ) {
+    material_t *mat = material;
+    
+    ray_path->ray.direction = vec3_random_unit_hemisphere( &ray_path->hit_normal );
 
-#endif
+    if ( mat->color_setter == NULL )
+        return mat->color;
+    return mat->color_setter( NULL );
+}

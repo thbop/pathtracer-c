@@ -8,4 +8,4 @@ always:
 	mkdir -p bin
 
 main:
-	$(CC) src/pathtracer.c -o bin/pathtracer.exe $(CFLAGS) $(CLIB)
+	$(CC) src/pathtracer.c src/vec3.c src/ray.c src/materials.c src/shape.c -o bin/pathtracer.exe $(CFLAGS) $(CLIB)

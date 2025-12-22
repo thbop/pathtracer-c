@@ -20,22 +20,29 @@
 * SOFTWARE.
 */
 
-#ifndef RAY_H
-#define RAY_H
+#ifndef SHAPE_H
+#define SHAPE_H
 
 #include "vec3.h"
+#include "ray.h"
+#include "materials.h"
+
 
 typedef struct {
-    vec3 origin, direction;
-} ray_t;
+    vec3 position;
+    void *data;
+    material_t material;
+
+    bool (*hit)( void*, ray_path_t* );
+} shape_t;
 
 typedef struct {
-    ray_t ray;
-    vec3 hit_normal;
-    int bounces;
-} ray_path_t;
+    float radius;
+} shape_sphere_data_t;
 
-
-vec3 ray_at( ray_t *ray, float t );
+// Hit functions
+//     Will return true upon hitting the desired object
+//     Will set the ray origin to the hit point upon hit
+bool shape_sphere_hit( void *shape, ray_path_t *ray_path );
 
 #endif

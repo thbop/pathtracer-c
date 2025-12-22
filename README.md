@@ -37,3 +37,10 @@ Writing another pathtracer in C.
     <p>In this section, I started bouncing light.</p>
 </details>
 
+<details>
+    <summary>Chapter 5</summary>
+    <img src="images/5_object_design.png" />
+    <img src="images/5.png" />
+    <p>In this section, I refactored the intersection tests and material properties into separate classes. Shapes and materials ought to be more extendable.</p>
+</details>
+

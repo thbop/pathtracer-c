@@ -20,22 +20,24 @@
 * SOFTWARE.
 */
 
-#ifndef RAY_H
-#define RAY_H
+#ifndef MATERIALS_H
+#define MATERIALS_H
 
 #include "vec3.h"
+#include "ray.h"
 
 typedef struct {
-    vec3 origin, direction;
-} ray_t;
+    vec3 color;
+    vec3 (*color_setter)(void*);
 
-typedef struct {
-    ray_t ray;
-    vec3 hit_normal;
-    int bounces;
-} ray_path_t;
+    vec3 (*processor)( void*, ray_path_t* );
+} material_t;
 
-
-vec3 ray_at( ray_t *ray, float t );
+// Material functions
+//     Assume ray origin is a hit point
+//     Assume hit_normal is correct
+//     Will return a color based on the interaction
+//     Will set the ray direction based on the interaction
+vec3 material_diffuse( void *material, ray_path_t *ray_path );
 
 #endif

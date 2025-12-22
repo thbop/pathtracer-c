@@ -26,6 +26,8 @@
 #include "vec3.h"
 #include "ray.h"
 #include "camera.h"
+#include "materials.h"
+#include "shape.h"
 
 #if __INTELLISENSE__
     #define constexpr
@@ -53,38 +55,20 @@ static struct {
     SDL_AtomicInt render_progress;
 } state;
 
+// TEMP
+static shape_sphere_data_t sphere_data;
+static shape_t sphere;
+
 vec3 ray_hit( ray_path_t *ray_path ) {
     if ( ray_path->bounces == 0 )
         return VEC3_ZERO;
 
     ray_path->bounces--;
 
-    vec3 sphere_origin = { 0.0f, 0.0f, 10.0f };
-    vec3 sphere_color  = { 0.0f, 0.5f, 0.6f };
-    float sphere_radius = 4.0f;
-
-    vec3 diff = vec3_sub( &ray_path->ray.origin, &sphere_origin );
-    float
-        a = 1.0f, // vec3_dot( &ray_path->ray.direction, &ray_path->ray.direction ),
-        b = 2.0f * vec3_dot( &diff, &ray_path->ray.direction ),
-        c = vec3_dot( &diff, &diff ) - sphere_radius*sphere_radius;
-    
-    float discriminant = b*b - 4*a*c;
-    if ( discriminant > 0 ) { // If hit
-        float t = ( -b - SDL_sqrtf( discriminant ) ) / ( 2*a );
-        if ( t > 0.0f ) {
-            vec3
-                hit_position = ray_at( &ray_path->ray, t ),
-                hit_normal   = vec3_point_to( &sphere_origin, &hit_position );
-            
-
-            ray_path->ray.origin    = hit_position;
-            ray_path->ray.direction = vec3_random_unit_hemisphere( &hit_normal );
-
-            vec3 next_color = ray_hit( ray_path );
-            return vec3_mul( &sphere_color, &next_color );
-        }
+    if ( sphere.hit( &sphere, ray_path ) ) {
+        return sphere.material.processor( &sphere.material, ray_path );
     }
+    
     // Otherwise
     return (vec3){ 0.68f, 0.68f, 0.70f };
 }
@@ -168,6 +152,18 @@ int main() {
         RENDER_WIDTH, RENDER_HEIGHT
     ) );
     SDL_SetTextureScaleMode( state.texture, SDL_SCALEMODE_NEAREST );
+
+    // TEMP
+    sphere_data.radius = 4.0f;
+    sphere = (shape_t){
+        .position = { 0.0f, 0.0f, 10.0f },
+        .data     = &sphere_data,
+        .material = {
+            .color     = { 0.4, 0.5, 0.3 },
+            .processor = material_diffuse,
+        },
+        .hit = shape_sphere_hit,
+    };
 
     render_call();
 
