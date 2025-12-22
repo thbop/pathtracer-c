@@ -24,6 +24,7 @@
 #define VEC3_H
 
 #include "SDL3/SDL.h"
+#include "stdlib.h"
 
 typedef struct {
     float x, y, z;
@@ -130,6 +131,29 @@ vec3 vec3_normalize( vec3 *a ) {
 vec3 vec3_point_to( vec3 *start, vec3 *target ) {
     vec3 difference = vec3_sub( target, start );
     return vec3_normalize( &difference );
+}
+
+vec3 vec3_random() {
+    vec3 p = {
+        rand() * 12982.02345f,
+        rand() * 23940.21398f,
+        rand() * 62915.29356f,
+    };
+
+    return p;
+}
+
+vec3 vec3_random_unit() {
+    vec3 p = vec3_random();
+    return vec3_normalize( &p );
+}
+
+vec3 vec3_random_unit_hemisphere( vec3 *normal ) {
+    while ( true ) {
+        vec3 p = vec3_random();
+        if ( vec3_dot( normal, &p ) )
+            return vec3_normalize( &p );
+    }
 }
 
 vec3 vec3_lerp( vec3 *a, vec3 *b, float t ) {

@@ -31,11 +31,12 @@
     #define constexpr
 #endif
 
-#define RENDER_WIDTH      1280
-#define RENDER_HEIGHT     720
-#define WINDOW_WIDTH      1280
+#define WINDOW_WIDTH      1280 // Resolution
 #define WINDOW_HEIGHT     720
-#define PIXEL_SUBDIVISION 2
+#define RENDER_WIDTH      1280  // Upscaled to window size
+#define RENDER_HEIGHT     720
+#define PIXEL_SUBDIVISION 2    // Antialiasing (1 = none)
+#define RAY_MAX_BOUNCES   10
 
 
 #define SDL_ASSERT( expr ) \
@@ -52,28 +53,40 @@ static struct {
     SDL_AtomicInt render_progress;
 } state;
 
-vec3 ray_hit( ray_t *ray ) {
-    // return (vec3){ ray->direction.y, ray->direction.y, ray->direction.y };
+vec3 ray_hit( ray_path_t *ray_path ) {
+    if ( ray_path->bounces == 0 )
+        return VEC3_ZERO;
 
-    vec3 sphere_origin = { 0.0, 0.0, 10.0 };
+    ray_path->bounces--;
+
+    vec3 sphere_origin = { 0.0f, 0.0f, 10.0f };
+    vec3 sphere_color  = { 0.0f, 0.5f, 0.6f };
     float sphere_radius = 4.0f;
 
-    vec3 diff = vec3_sub( &ray->origin, &sphere_origin );
+    vec3 diff = vec3_sub( &ray_path->ray.origin, &sphere_origin );
     float
-        a = vec3_dot( &ray->direction, &ray->direction ),
-        b = 2.0f * vec3_dot( &diff, &ray->direction ),
+        a = 1.0f, // vec3_dot( &ray_path->ray.direction, &ray_path->ray.direction ),
+        b = 2.0f * vec3_dot( &diff, &ray_path->ray.direction ),
         c = vec3_dot( &diff, &diff ) - sphere_radius*sphere_radius;
     
     float discriminant = b*b - 4*a*c;
     if ( discriminant > 0 ) { // If hit
-        // float t = ( -b - SDL_sqrtf( discriminant ) ) / ( 2*a );
-        // vec3
-        //     hit_position = ray_at( ray, t ),
-        //     hit_normal   = vec3_point_to( &sphere_origin, &hit_position );
-        return (vec3){ 1.0, 0.0, 0.0 };
+        float t = ( -b - SDL_sqrtf( discriminant ) ) / ( 2*a );
+        if ( t > 0.0f ) {
+            vec3
+                hit_position = ray_at( &ray_path->ray, t ),
+                hit_normal   = vec3_point_to( &sphere_origin, &hit_position );
+            
+
+            ray_path->ray.origin    = hit_position;
+            ray_path->ray.direction = vec3_random_unit_hemisphere( &hit_normal );
+
+            vec3 next_color = ray_hit( ray_path );
+            return vec3_mul( &sphere_color, &next_color );
+        }
     }
     // Otherwise
-    return (vec3){ 0.78f, 0.78f, 0.8f };
+    return (vec3){ 0.68f, 0.68f, 0.70f };
 }
 
 static int SDLCALL render( void *surface ) {
@@ -88,14 +101,16 @@ static int SDLCALL render( void *surface ) {
 
     float subpixel_size = 1.0f / PIXEL_SUBDIVISION;
     
-    ray_t ray;
     for ( int j = 0; j < surf->h; j++ ) {
         for ( int i = 0; i < surf->w; i++ ) {
             vec3 color = VEC3_ZERO;
             for ( int s_j = 0; s_j < PIXEL_SUBDIVISION; s_j++ ) {
                 for ( int s_i = 0; s_i < PIXEL_SUBDIVISION; s_i++ ) {
-                    camera_generate_ray( &ray, &camera, i + s_i * subpixel_size, j + s_j * subpixel_size );
-                    vec3 raw_ray_color = ray_hit( &ray );
+                    ray_path_t ray_path = {
+                        .bounces = RAY_MAX_BOUNCES,
+                    };
+                    camera_generate_ray( &ray_path.ray, &camera, i + s_i * subpixel_size, j + s_j * subpixel_size );
+                    vec3 raw_ray_color = ray_hit( &ray_path );
                     color = vec3_add( &color, &raw_ray_color );
                 }
             }
@@ -126,14 +141,14 @@ void render_finish() {
 void display_progress() {
     int progress = SDL_GetAtomicInt( &state.render_progress );
     if ( progress < 25 ) {
-        printf( "\rProgress: [" );
+        printf( "\rProgress: <" );
         for ( int i = 0; i < 25; i++ ) {
             if ( i <= progress )
                 putchar( '=' );
             else
                 putchar( ' ' );
         }
-        putchar( ']' );
+        putchar( '>' );
     }
 }
 

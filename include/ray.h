@@ -29,6 +29,11 @@ typedef struct {
     vec3 origin, direction;
 } ray_t;
 
+typedef struct {
+    ray_t ray;
+    int bounces;
+} ray_path_t;
+
 
 vec3 ray_at( ray_t *ray, float t ) {
     vec3 a = vec3_mul_value( &ray->direction, t );
