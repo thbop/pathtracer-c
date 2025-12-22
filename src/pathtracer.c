@@ -21,6 +21,8 @@
 */
 
 #include "stdio.h"
+#include "float.h"
+
 #include "SDL3/SDL.h"
 
 #include "list_t.h"
@@ -66,13 +68,22 @@ vec3 ray_hit( ray_path_t *ray_path ) {
 
     ray_path->bounces--;
 
+    float closest_t = __FLT32_MAX__;
+    shape_t *closest_shape;
     list_foreach( state.shapes, it ) {
         shape_t *shape = it->value;
-        if ( shape->hit( shape, ray_path ) ) {
-            return shape->material.processor( &shape->material, ray_path );
+        float t = shape->hit( shape, ray_path );
+
+        if ( t >= 0.0f && t < closest_t ) {
+            closest_t = t;
+            closest_shape = shape;
         }
     }
-    
+
+    if ( closest_t < __FLT32_MAX__ ) {
+        ray_path->ray.origin = ray_at( &ray_path->ray, closest_t );
+        return closest_shape->material.processor( &closest_shape->material, ray_path );
+    }
     // Otherwise
     return (vec3){ 0.68f, 0.68f, 0.70f };
 }
@@ -163,24 +174,24 @@ int main() {
     shape_sphere_data_t sphere_data;
     shape_t sphere;
 
-    sphere_data.radius = 1000.0f;
-    sphere = (shape_t){
-        .position = { 0.0f, -1004.0f, 10.0f },
-        .data     = qalloc( sphere_data ),
-        .material = {
-            .color     = { 0.4f, 0.4f, 0.4f },
-            .processor = material_diffuse,
-        },
-        .hit = shape_sphere_hit,
-    };
-    list_append( state.shapes, sphere );
-
     sphere_data.radius = 4.0f;
     sphere = (shape_t){
         .position = { 0.0f, 0.0f, 10.0f },
         .data     = qalloc( sphere_data ),
         .material = {
             .color     = { 0.4f, 0.5f, 0.3f },
+            .processor = material_diffuse,
+        },
+        .hit = shape_sphere_hit,
+    };
+    list_append( state.shapes, sphere );
+
+    sphere_data.radius = 1000.0f;
+    sphere = (shape_t){
+        .position = { 0.0f, -1004.0f, 10.0f },
+        .data     = qalloc( sphere_data ),
+        .material = {
+            .color     = { 0.4f, 0.4f, 0.4f },
             .processor = material_diffuse,
         },
         .hit = shape_sphere_hit,

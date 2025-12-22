@@ -22,7 +22,7 @@
 
 #include "shape.h"
 
-bool shape_sphere_hit( void *shape, ray_path_t *ray_path ) {
+float shape_sphere_hit( void *shape, ray_path_t *ray_path ) {
     shape_t *sh = shape;
 
     shape_sphere_data_t *sphere_data = sh->data;
@@ -36,10 +36,9 @@ bool shape_sphere_hit( void *shape, ray_path_t *ray_path ) {
     if ( discriminant > 0 ) { // If hit (positive or negative)
         float t = ( -b - SDL_sqrtf( discriminant ) ) / 2.0f;
         if ( t > 0.0f ) { // If positive
-            ray_path->ray.origin = ray_at( &ray_path->ray, t );
             ray_path->hit_normal = vec3_point_to( &sh->position, &ray_path->ray.origin );
-            return true;
+            return t;
         }
     }
-    return false;
+    return -1.0f;
 }

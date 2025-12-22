@@ -33,7 +33,7 @@ typedef struct {
     void *data;
     material_t material;
 
-    bool (*hit)( void*, ray_path_t* );
+    float (*hit)( void*, ray_path_t* );
 } shape_t;
 
 typedef struct {
@@ -41,8 +41,7 @@ typedef struct {
 } shape_sphere_data_t;
 
 // Hit functions
-//     Will return true upon hitting the desired object
-//     Will set the ray origin to the hit point upon hit
-bool shape_sphere_hit( void *shape, ray_path_t *ray_path );
+//     Will return a positive t upon hitting the object
+float shape_sphere_hit( void *shape, ray_path_t *ray_path );
 
 #endif
