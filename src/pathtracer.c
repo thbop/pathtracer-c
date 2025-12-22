@@ -25,7 +25,7 @@
 
 #include "SDL3/SDL.h"
 
-#include "list_t.h"
+#include "chelp/list_t.h"
 
 #include "vec3.h"
 #include "ray.h"
@@ -41,7 +41,7 @@
 #define WINDOW_HEIGHT     720
 #define RENDER_WIDTH      1280  // Upscaled to window size
 #define RENDER_HEIGHT     720
-#define PIXEL_SUBDIVISION 16    // Antialiasing (1 = none)
+#define PIXEL_SUBDIVISION 2     // Antialiasing/samples (1 = none)
 #define RAY_MAX_BOUNCES   10
 
 

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Iinclude -std=c23 -fdiagnostics-color=always -g
-CLIB = -Llib -lSDL3
+CLIB = -Llib -lSDL3 -lchelp
 
 all: always main
 
