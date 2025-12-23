@@ -37,12 +37,12 @@
     #define constexpr // Intellisense doesn't like the c23 standard
 #endif
 
-#define WINDOW_WIDTH      1280 // Resolution
-#define WINDOW_HEIGHT     720
-#define RENDER_WIDTH      1280 // Upscaled to window size
-#define RENDER_HEIGHT     720
-#define PIXEL_SUBDIVISION 16   // Antialiasing/samples (1 = none)
-#define RAY_MAX_BOUNCES   10
+#define WINDOW_WIDTH        1280 // Resolution
+#define WINDOW_HEIGHT       720
+#define RENDER_WIDTH        1280 // Upscaled to window size
+#define RENDER_HEIGHT       720
+#define PIXEL_SUBDIVISION   2    // Antialiasing/samples (1 = none)
+#define RAY_MAX_BOUNCES     10
 
 
 #define SDL_ASSERT( expr ) \
