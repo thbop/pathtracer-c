@@ -27,6 +27,7 @@ vec3 material_diffuse( void *material, ray_path_t *ray_path ) {
     material_t *mat = material;
     
     ray_path->ray.direction = vec3_random_unit_hemisphere( &ray_path->hit_normal );
+    // ray_path->ray.direction = vec3_random_unit();
 
     if ( mat->color_setter == NULL )
         return mat->color;

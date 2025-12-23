@@ -41,7 +41,7 @@
 #define WINDOW_HEIGHT     720
 #define RENDER_WIDTH      1280 // Upscaled to window size
 #define RENDER_HEIGHT     720
-#define PIXEL_SUBDIVISION 2    // Antialiasing/samples (1 = none)
+#define PIXEL_SUBDIVISION 16   // Antialiasing/samples (1 = none)
 #define RAY_MAX_BOUNCES   10
 
 
@@ -61,6 +61,15 @@ static struct {
     SDL_AtomicInt render_progress;
 } state;
 
+
+vec3 sky_color( ray_path_t *ray_path ) {
+    float t = ( ray_path->ray.direction.y + 1.0f ) * 0.5f;
+    vec3
+        white = (vec3){ 0.7f, 0.7f, 0.7f },
+        blue  = (vec3){ 0.65f, 0.65f, 0.70f };
+    
+    return vec3_lerp( &blue, &white, t );
+}
 
 vec3 ray_hit( ray_path_t *ray_path ) {
     if ( ray_path->bounces == 0 )
@@ -88,7 +97,7 @@ vec3 ray_hit( ray_path_t *ray_path ) {
         return vec3_mul( &this_color, &next_color );
     }
     // Otherwise
-    return (vec3){ 0.68f, 0.68f, 0.70f };
+    return sky_color( ray_path );
 }
 
 static int SDLCALL render( void *surface ) {
@@ -97,7 +106,7 @@ static int SDLCALL render( void *surface ) {
         .origin = VEC3_ZERO,
         .width  = RENDER_WIDTH,
         .height = RENDER_HEIGHT,
-        .fov    = 120.0f,
+        .fov    = 90.0f,
     };
     camera_compute_focal_length( &camera );
 
@@ -179,10 +188,10 @@ int main() {
 
     sphere_data.radius = 4.0f;
     sphere = (shape_t){
-        .position = { 0.0f, 0.0f, 10.0f },
+        .position = { 0.0f, 0.0f, 20.0f },
         .data     = qalloc( sphere_data ),
         .material = {
-            .color     = { 0.4f, 0.5f, 0.3f },
+            .color     = { 0.6f, 0.6f, 0.8f },
             .processor = material_diffuse,
         },
         .hit = shape_sphere_hit,
@@ -191,10 +200,10 @@ int main() {
 
     sphere_data.radius = 1000.0f;
     sphere = (shape_t){
-        .position = { 0.0f, -1004.0f, 10.0f },
+        .position = { 0.0f, -1004.0f, 20.0f },
         .data     = qalloc( sphere_data ),
         .material = {
-            .color     = { 0.4f, 0.4f, 0.4f },
+            .color     = { 0.43f, 0.43f, 0.4f },
             .processor = material_diffuse,
         },
         .hit = shape_sphere_hit,

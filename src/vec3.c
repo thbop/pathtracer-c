@@ -131,9 +131,9 @@ vec3 vec3_point_to( vec3 *start, vec3 *target ) {
 
 vec3 vec3_random() {
     vec3 p = {
-        rand() * 12982.02345f,
-        rand() * 23940.21398f,
-        rand() * 62915.29356f,
+        (float)rand() - ( RAND_MAX >> 1 ),
+        (float)rand() - ( RAND_MAX >> 1 ),
+        (float)rand() - ( RAND_MAX >> 1 ),
     };
 
     return p;
@@ -147,7 +147,7 @@ vec3 vec3_random_unit() {
 vec3 vec3_random_unit_hemisphere( vec3 *normal ) {
     while ( true ) {
         vec3 p = vec3_random();
-        if ( vec3_dot( normal, &p ) )
+        if ( vec3_dot( normal, &p ) > 0.0f )
             return vec3_normalize( &p );
     }
 }

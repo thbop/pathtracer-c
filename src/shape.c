@@ -34,9 +34,10 @@ float shape_sphere_hit( void *shape, ray_path_t *ray_path ) {
         discriminant = b*b - 4.0f*c;
     
     if ( discriminant > 0 ) { // If hit (positive or negative)
-        float t = ( -b - SDL_sqrtf( discriminant ) ) / 2.0f;
+        float t = ( -b - SDL_sqrtf( discriminant ) ) * 0.5f;
         if ( t > 0.0f ) { // If positive
-            ray_path->hit_normal = vec3_point_to( &sh->position, &ray_path->ray.origin );
+            vec3 hit_position = ray_at( &ray_path->ray, t );
+            ray_path->hit_normal = vec3_point_to( &sh->position, &hit_position );
             return t;
         }
     }

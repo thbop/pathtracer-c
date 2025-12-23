@@ -25,6 +25,7 @@
 
 #include "SDL3/SDL.h"
 #include "stdlib.h"
+#include "math.h"
 
 typedef struct {
     float x, y, z;
