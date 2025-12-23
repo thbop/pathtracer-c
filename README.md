@@ -2,7 +2,15 @@
 
 Writing another pathtracer in C.
 
+## Build Instructions
+- Download the devel-mingw version of [SDL3](https://github.com/libsdl-org/SDL/releases/tag/release-3.2.28)
+- Extract the `SDL3` folder containing headers to the include folder
+- Create a `/bin` directory (in the main directory) and extract `SDL3.dll` into it
+- Create a `/lib` directory (also in the main directory) and extract `libSDL3.dll.a` into it
+- Download the latest release of [chelp](https://github.com/thbop/chelp/releases) and extract libchelp.a into the `/lib` directory (the headers for chelp are already included in this repo)
+- Run `make`, `pathtracer.exe` should be generated in the `/bin` folder
 
+## Reports
 
 <details>
     <summary>Chapter 0</summary>
