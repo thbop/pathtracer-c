@@ -76,4 +76,8 @@ Writing another pathtracer in C.
     <p>Wrote/adapted (from another project) as much code as required to make triangles render. Certainly not the best code. Certainly not a cube.</p>
 </details>
 
-
+<details>
+    <summary>Chapter 10</summary>
+    <img src="images/10.png" />
+    <p>Ignoring failures with triangles, here is a cool metal material.</p>
+</details>

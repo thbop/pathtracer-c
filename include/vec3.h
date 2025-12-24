@@ -61,4 +61,6 @@ vec3 vec3_random_unit_hemisphere( vec3 *normal );
 
 vec3 vec3_lerp( vec3 *a, vec3 *b, float t );
 
+vec3 vec3_reflect( vec3 *incoming, vec3 *normal );
+
 #endif

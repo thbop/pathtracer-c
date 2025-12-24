@@ -28,7 +28,10 @@
 
 typedef struct {
     vec3 color;
-    vec3 (*color_setter)(void*);
+    vec3 (*color_setter)( ray_path_t* );
+
+    float roughness;
+    float (*roughness_setter)( ray_path_t* );
 
     vec3 (*processor)( void*, ray_path_t* );
 } material_t;
@@ -39,5 +42,7 @@ typedef struct {
 //     Will return a color based on the interaction
 //     Will set the ray direction based on the interaction
 vec3 material_diffuse( void *material, ray_path_t *ray_path );
+
+vec3 material_metal( void *material, ray_path_t *ray_path );
 
 #endif

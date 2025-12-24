@@ -26,8 +26,33 @@
 vec3 material_diffuse( void *material, ray_path_t *ray_path ) {
     material_t *mat = material;
     
-    ray_path->ray.direction = vec3_random_unit_hemisphere( &ray_path->hit_normal );
-    // ray_path->ray.direction = vec3_random_unit();
+    // ray_path->ray.direction = vec3_random_unit_hemisphere( &ray_path->hit_normal );
+
+    // Source: https://raytracing.github.io/books/RayTracingInOneWeekend.html#diffusematerials/truelambertianreflection
+    vec3 random_sphere = vec3_random_unit();
+    ray_path->ray.direction = vec3_add( &ray_path->hit_normal, &random_sphere );
+
+    if ( mat->color_setter == NULL )
+        return mat->color;
+    return mat->color_setter( ray_path );
+}
+
+vec3 material_metal( void *material, ray_path_t *ray_path ) {
+    material_t *mat = material;
+
+    ray_path->ray.direction = vec3_reflect( &ray_path->ray.direction, &ray_path->hit_normal );
+
+    float roughness;
+    if ( mat->roughness_setter != NULL )
+        roughness = mat->roughness_setter( ray_path );
+    else
+        roughness = mat->roughness;
+
+    if ( roughness > 0.0f ) {
+        vec3 random_sphere = vec3_random_unit();
+        random_sphere = vec3_mul_value( &random_sphere, roughness );
+        ray_path->ray.direction = vec3_add( &ray_path->ray.direction, &random_sphere );
+    }
 
     if ( mat->color_setter == NULL )
         return mat->color;

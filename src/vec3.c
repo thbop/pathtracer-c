@@ -167,3 +167,11 @@ vec3 vec3_lerp( vec3 *a, vec3 *b, float t ) {
         b_weight = vec3_mul_value( b, t );
     return vec3_add( &a_weight, &b_weight );
 }
+
+
+vec3 vec3_reflect( vec3 *incoming, vec3 *normal ) {
+    float a = vec3_dot( incoming, normal ) * 2;
+    vec3 b = vec3_mul_value( normal, a );
+
+    return vec3_sub( incoming, &b );
+}

@@ -42,7 +42,7 @@
 #define WINDOW_HEIGHT       720
 #define RENDER_WIDTH        1280 // Upscaled to window size
 #define RENDER_HEIGHT       720
-#define PIXEL_SUBDIVISION   2    // Antialiasing/samples (1 = none)
+#define PIXEL_SUBDIVISION   16   // Antialiasing/samples (1 = none)
 #define RAY_MAX_BOUNCES     10
 
 
@@ -164,6 +164,10 @@ void display_progress() {
     }
 }
 
+float _goof_rough_setter( ray_path_t *ray_path ) {
+    return ( SDL_sinf( ray_path->ray.origin.y * ray_path->ray.origin.x ) + 1.0f ) * 0.5f;
+}
+
 int main() {
     // Setup
     SDL_ASSERT( SDL_Init( SDL_INIT_VIDEO ) );
@@ -187,17 +191,30 @@ int main() {
     shape_sphere_data_t sphere_data;
     shape_t sphere;
 
-    // sphere_data.radius = 4.0f;
-    // sphere = (shape_t){
-    //     .position = { 0.0f, 0.0f, 20.0f },
-    //     .data     = qalloc( sphere_data ),
-    //     .material = {
-    //         .color     = { 0.6f, 0.6f, 0.8f },
-    //         .processor = material_diffuse,
-    //     },
-    //     .hit = shape_sphere_hit,
-    // };
-    // list_append( state.shapes, sphere );
+    sphere_data.radius = 4.0f;
+    sphere = (shape_t){
+        .position = { -4.0f, 0.0f, 20.0f },
+        .data     = qalloc( sphere_data ),
+        .material = {
+            .color     = { 0.6f, 0.6f, 0.8f },
+            .processor = material_diffuse,
+        },
+        .hit = shape_sphere_hit,
+    };
+    list_append( state.shapes, sphere );
+
+    sphere_data.radius = 4.0f;
+    sphere = (shape_t){
+        .position = { 4.0f, 0.0f, 20.0f },
+        .data     = qalloc( sphere_data ),
+        .material = {
+            .color     = { 1.0f, 1.0f, 1.0f },
+            .roughness_setter = _goof_rough_setter,
+            .processor = material_metal,
+        },
+        .hit = shape_sphere_hit,
+    };
+    list_append( state.shapes, sphere );
 
     sphere_data.radius = 1000.0f;
     sphere = (shape_t){
@@ -211,26 +228,45 @@ int main() {
     };
     list_append( state.shapes, sphere );
 
-    model_t *model = model_load( "../scene/scene.obj" );
-    for ( int i = 0; i < model->faces.elementCount; i += 3 ) {
-        shape_triangle_data_t triangle_data = {
-            .p0 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 0 ).vertex ),
-            .p1 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 1 ).vertex ),
-            .p2 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 2 ).vertex ),
-            .normal = _vector_at( &model->normals, vector_at( model_face_t, model->faces, i ).normal ),
-        };
+    // model_t *model = model_load( "../scene/scene.obj" );
+    // for ( int i = 0; i < model->faces.elementCount; i += 3 ) {
+    //     shape_triangle_data_t triangle_data = {
+    //         .p0 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 0 ).vertex ),
+    //         .p1 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 1 ).vertex ),
+    //         .p2 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 2 ).vertex ),
+    //         .normal = _vector_at( &model->normals, vector_at( model_face_t, model->faces, i ).normal ),
+    //     };
         
-        shape_t triangle = {
-            .data     = qalloc( triangle_data ),
-            .material = {
-                .color     = { 0.6f, 0.6f, 0.8f },
-                .processor = material_diffuse,
-            },
-            .hit = shape_triangle_hit,
-        };
+    //     shape_t triangle = {
+    //         .data     = qalloc( triangle_data ),
+    //         .material = {
+    //             .color     = { 0.6f, 0.6f, 0.8f },
+    //             .processor = material_diffuse,
+    //         },
+    //         .hit = shape_triangle_hit,
+    //     };
 
-        list_append( state.shapes, triangle );
-    }
+    //     list_append( state.shapes, triangle );
+    // }
+
+    // vec3
+    //     tn  = {  0.0f,  0.0f, -1.0f },
+    //     tp0 = { -1.0f, -1.0f, 20.0f },
+    //     tp1 = {  1.0f, -1.0f, 20.0f },
+    //     tp2 = {  0.0f,  1.0f, 20.0f };
+    // shape_triangle_data_t triangle_data = {
+    //     .normal = &tn,
+    //     .p0 = &tp0, .p1 = &tp1, .p2 = &tp2,
+    // };
+    // shape_t triangle = {
+    //     .data     = qalloc( triangle_data ),
+    //     .material = {
+    //         .color     = { 0.6f, 0.6f, 0.8f },
+    //         .processor = material_diffuse,
+    //     },
+    //     .hit = shape_triangle_hit,
+    // };
+    // list_append( state.shapes, triangle );
     
 
     render_call();
@@ -271,7 +307,7 @@ int main() {
     }
     list_free( state.shapes );
 
-    model_free( model );
+    // model_free( model );
     SDL_DestroyRenderer( state.renderer );
     SDL_DestroyWindow( state.window );
     SDL_Quit();
