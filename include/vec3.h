@@ -42,6 +42,8 @@ vec3 vec3_mul_value( vec3 *a, float value );
 vec3 vec3_div( vec3 *a, vec3 *b );
 vec3 vec3_div_value( vec3 *a, float value );
 
+vec3 vec3_cross( vec3 *a, vec3 *b );
+
 float vec3_dot( vec3 *a, vec3 *b );
 
 float vec3_square_length( vec3 *a );

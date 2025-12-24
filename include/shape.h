@@ -40,8 +40,15 @@ typedef struct {
     float radius;
 } shape_sphere_data_t;
 
+typedef struct {
+    vec3 *p0, *p1, *p2, *normal;
+} shape_triangle_data_t;
+
 // Hit functions
 //     Will return a positive t upon hitting the object
+//     Will set the hit_normal
 float shape_sphere_hit( void *shape, ray_path_t *ray_path );
+
+float shape_triangle_hit( void *shape, ray_path_t *ray_path );
 
 #endif

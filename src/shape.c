@@ -43,3 +43,42 @@ float shape_sphere_hit( void *shape, ray_path_t *ray_path ) {
     }
     return -1.0f;
 }
+
+float shape_triangle_hit( void *shape, ray_path_t *ray_path ) {
+    shape_t *sh = shape;
+    shape_triangle_data_t *tri_dat = sh->data;
+
+    // Adapted from Real-Time Rendering 4th Edition by Akenine-Möller on page 965
+    vec3
+        e0 = vec3_sub( tri_dat->p1, tri_dat->p0 ),
+        e1 = vec3_sub( tri_dat->p2, tri_dat->p0 ),
+        q  = vec3_cross( &ray_path->ray.direction, &e1 );
+    float a = vec3_dot( &e0, &q );
+
+    // If not near zero
+    if ( a > -1e-10f && a < 1e-10f ) return -1.0f;
+
+    float f = 1.0f / a;
+    vec3 s = vec3_sub( &ray_path->ray.origin, tri_dat->p0 );
+    float u = f * vec3_dot( &s, &q );
+
+    // If outside triangle
+    if ( u < 0.0f ) return -1.0f;
+
+    vec3 r = vec3_cross( &s, &e0 );
+    float v = f * vec3_dot( &ray_path->ray.direction, &r );
+
+    // Also if outside triangle
+    if ( v < 0.0f || u + v > 1.0f ) return -1.0f;
+
+    float t = f * vec3_dot( &e1, &r );
+
+    // Cull if intersection occurs behind the ray
+    if ( t < 0.0f ) return -1.0f;
+
+    // NOTE: u and v can be used for texture coordinates
+
+    ray_path->hit_normal = *tri_dat->normal;
+
+    return t;
+}

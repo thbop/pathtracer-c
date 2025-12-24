@@ -30,6 +30,7 @@
 #include "vec3.h"
 #include "ray.h"
 #include "camera.h"
+#include "model.h"
 #include "materials.h"
 #include "shape.h"
 
@@ -186,17 +187,17 @@ int main() {
     shape_sphere_data_t sphere_data;
     shape_t sphere;
 
-    sphere_data.radius = 4.0f;
-    sphere = (shape_t){
-        .position = { 0.0f, 0.0f, 20.0f },
-        .data     = qalloc( sphere_data ),
-        .material = {
-            .color     = { 0.6f, 0.6f, 0.8f },
-            .processor = material_diffuse,
-        },
-        .hit = shape_sphere_hit,
-    };
-    list_append( state.shapes, sphere );
+    // sphere_data.radius = 4.0f;
+    // sphere = (shape_t){
+    //     .position = { 0.0f, 0.0f, 20.0f },
+    //     .data     = qalloc( sphere_data ),
+    //     .material = {
+    //         .color     = { 0.6f, 0.6f, 0.8f },
+    //         .processor = material_diffuse,
+    //     },
+    //     .hit = shape_sphere_hit,
+    // };
+    // list_append( state.shapes, sphere );
 
     sphere_data.radius = 1000.0f;
     sphere = (shape_t){
@@ -209,6 +210,28 @@ int main() {
         .hit = shape_sphere_hit,
     };
     list_append( state.shapes, sphere );
+
+    model_t *model = model_load( "../scene/scene.obj" );
+    for ( int i = 0; i < model->faces.elementCount; i += 3 ) {
+        shape_triangle_data_t triangle_data = {
+            .p0 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 0 ).vertex ),
+            .p1 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 1 ).vertex ),
+            .p2 = _vector_at( &model->vertices, vector_at( model_face_t, model->faces, i + 2 ).vertex ),
+            .normal = _vector_at( &model->normals, vector_at( model_face_t, model->faces, i ).normal ),
+        };
+        
+        shape_t triangle = {
+            .data     = qalloc( triangle_data ),
+            .material = {
+                .color     = { 0.6f, 0.6f, 0.8f },
+                .processor = material_diffuse,
+            },
+            .hit = shape_triangle_hit,
+        };
+
+        list_append( state.shapes, triangle );
+    }
+    
 
     render_call();
 
@@ -248,6 +271,7 @@ int main() {
     }
     list_free( state.shapes );
 
+    model_free( model );
     SDL_DestroyRenderer( state.renderer );
     SDL_DestroyWindow( state.window );
     SDL_Quit();

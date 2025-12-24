@@ -52,21 +52,15 @@ int _model_find_or_append_face( vector_t *face_list, model_face_t *face, int sea
     return -1;
 }
 
-// A CPU representation of the model to be loaded onto the GPU later
-typedef struct {
-    char *name;
-    vector_t vertices;
-    vector_t indices;
-} Model;
 
 // Returns a new empty model build. `name` can be NULL
-model_t *model_new( const char *name, vec3 color ) {
+model_t *model_new( const char *name ) {
     model_t model = {
-        .name      = NULL,
-        .color     = color,
-        .vertices  = new_vector( vec3 ),
+        .name       = NULL,
+        .vertices   = new_vector( vec3 ),
         .tex_coords = new_vector( vec2 ),
-        .faces     = new_vector( model_face_t ),
+        .faces      = new_vector( model_face_t ),
+        .normals    = new_vector( vec3 ),
     };
     if ( name != NULL )
         model.name = tstr_copy( (char*)name );
@@ -89,8 +83,15 @@ void _model_lex_vertex_line( char **args, model_t *model ) {
             vector_append( model->vertices, vertex );
             break;
         }
-        case 'n': // vn - normal
+        case 'n': { // vn - normal
+            vec3 normal = {
+                strtof( args[1], NULL ),
+                strtof( args[2], NULL ),
+                strtof( args[3], NULL ),
+            };
+            vector_append( model->normals, normal );
             break;
+        }
         case 't': { // vt - texture coordinate
             vec2 tex_coord = {
                 strtof( args[1], NULL ),
@@ -116,7 +117,7 @@ void _model_lex_face_line( char **args, model_t *model ) {
         char **attributes = tstr_split( args[i], '/', &attribute_count );
 
         model_face_t face = {
-            // .obj indcies start with 1 instead of 0
+            // .obj indices start with 1 instead of 0
             .vertex    = atoi( attributes[0] ) - 1,
             .tex_coord = atoi( attributes[1] ) - 1,
             .normal    = atoi( attributes[2] ) - 1,
@@ -162,6 +163,7 @@ void model_free( model_t *model ) {
     vector_free( model->vertices );
     vector_free( model->tex_coords );
     vector_free( model->faces );
+    vector_free( model->normals );
 
     free( model );
 }
@@ -186,7 +188,7 @@ model_t *model_load( const char *model_filename ) {
     int line_count;
     char **lines = tstr_split( data, '\n', &line_count );
 
-    model_t *model = model_new( NULL, (vec3){ 1.0f, 1.0f, 1.0f } );
+    model_t *model = model_new( NULL );
 
     for ( int i = 0; i < line_count; i++ )
         _model_lex_line( lines[i], model );

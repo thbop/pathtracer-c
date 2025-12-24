@@ -70,3 +70,10 @@ Writing another pathtracer in C.
     <p>Fixed sphere normals and some vec3 random functions. Now things are rendering more correctly.</p>
 </details>
 
+<details>
+    <summary>Chapter 9</summary>
+    <img src="images/9.png" />
+    <p>Wrote/adapted (from another project) as much code as possible to make triangles render. Certainly not a cube.</p>
+</details>
+
+

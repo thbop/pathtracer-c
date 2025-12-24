@@ -87,6 +87,14 @@ vec3 vec3_div_value( vec3 *a, float value ) {
     };
 }
 
+vec3 vec3_cross( vec3 *a, vec3 *b ) {
+    return (vec3){
+        a->x*b->x + a->x*b->y + a->x*b->z,
+        a->y*b->x + a->y*b->y + a->y*b->z,
+        a->z*b->x + a->z*b->y + a->z*b->z,
+    };
+}
+
 float vec3_dot( vec3 *a, vec3 *b ) {
     return a->x * b->x + a->y * b->y + a->z * b->z;
 }

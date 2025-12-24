@@ -50,15 +50,15 @@ typedef struct {
 
 typedef struct {
     char *name;
-    vec3 color;
     vector_t vertices;
     vector_t tex_coords;
     vector_t faces;
+    vector_t normals;
 } model_t;
 
 
 // Returns a new empty model build. `name` can be NULL
-model_t *model_new( const char *name, vec3 color );
+model_t *model_new( const char *name );
 
 // Frees and deletes a model_t
 void model_free( model_t *model );
@@ -66,7 +66,7 @@ void model_free( model_t *model );
 
 // Loads the only object in a Wavefront .obj file (ensure that there is only
 // one object). Also make sure that the faces are triangles.
-model_t *model_load( const char *modelFileName );
+model_t *model_load( const char *model_filename );
 
 
 #endif
