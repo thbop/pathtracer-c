@@ -73,7 +73,7 @@ Writing another pathtracer in C.
 <details>
     <summary>Chapter 9</summary>
     <img src="images/9.png" />
-    <p>Wrote/adapted (from another project) as much code as possible to make triangles render. Certainly not a cube.</p>
+    <p>Wrote/adapted (from another project) as much code as required to make triangles render. Certainly not the best code. Certainly not a cube.</p>
 </details>
 
 
