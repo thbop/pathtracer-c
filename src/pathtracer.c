@@ -42,7 +42,7 @@
 #define WINDOW_HEIGHT       720
 #define RENDER_WIDTH        1280 // Upscaled to window size
 #define RENDER_HEIGHT       720
-#define PIXEL_SUBDIVISION   16   // Antialiasing/samples (1 = none)
+#define PIXEL_SUBDIVISION   2    // Antialiasing/samples (1 = none)
 #define RAY_MAX_BOUNCES     10
 
 
@@ -80,18 +80,21 @@ vec3 ray_hit( ray_path_t *ray_path ) {
 
     float closest_t = __FLT32_MAX__;
     shape_t *closest_shape;
+    vec3 closest_hit_normal;
     list_foreach( state.shapes, it ) {
         shape_t *shape = it->value;
         float t = shape->hit( shape, ray_path );
 
-        if ( t >= 0.0f && t < closest_t ) {
+        if ( 0.0f < t && t < closest_t ) {
             closest_t = t;
             closest_shape = shape;
+            closest_hit_normal = ray_path->hit_normal;
         }
     }
 
     if ( closest_t < __FLT32_MAX__ ) {
         ray_path->ray.origin = ray_at( &ray_path->ray, closest_t );
+        ray_path->hit_normal = closest_hit_normal;
         vec3
             this_color = closest_shape->material.processor( &closest_shape->material, ray_path ),
             next_color = ray_hit( ray_path );
@@ -191,6 +194,18 @@ int main() {
     shape_sphere_data_t sphere_data;
     shape_t sphere;
 
+    sphere_data.radius = 1000.0f;
+    sphere = (shape_t){
+        .position = { 0.0f, -1004.0f, 20.0f },
+        .data     = qalloc( sphere_data ),
+        .material = {
+            .color     = { 0.43f, 0.43f, 0.4f },
+            .processor = material_diffuse,
+        },
+        .hit = shape_sphere_hit,
+    };
+    list_append( state.shapes, sphere );
+
     sphere_data.radius = 4.0f;
     sphere = (shape_t){
         .position = { -4.0f, 0.0f, 20.0f },
@@ -216,17 +231,6 @@ int main() {
     };
     list_append( state.shapes, sphere );
 
-    sphere_data.radius = 1000.0f;
-    sphere = (shape_t){
-        .position = { 0.0f, -1004.0f, 20.0f },
-        .data     = qalloc( sphere_data ),
-        .material = {
-            .color     = { 0.43f, 0.43f, 0.4f },
-            .processor = material_diffuse,
-        },
-        .hit = shape_sphere_hit,
-    };
-    list_append( state.shapes, sphere );
 
     // model_t *model = model_load( "../scene/scene.obj" );
     // for ( int i = 0; i < model->faces.elementCount; i += 3 ) {

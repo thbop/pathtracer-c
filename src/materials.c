@@ -42,6 +42,7 @@ vec3 material_metal( void *material, ray_path_t *ray_path ) {
 
     ray_path->ray.direction = vec3_reflect( &ray_path->ray.direction, &ray_path->hit_normal );
 
+
     float roughness;
     if ( mat->roughness_setter != NULL )
         roughness = mat->roughness_setter( ray_path );
