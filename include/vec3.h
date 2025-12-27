@@ -55,6 +55,9 @@ vec3 vec3_normalize( vec3 *a );
 // start points to target
 vec3 vec3_point_to( vec3 *start, vec3 *target );
 
+float vec3_distance_to( vec3 *a, vec3 *b );
+float vec3_squared_distance_to( vec3 *a, vec3 *b );
+
 vec3 vec3_random();
 vec3 vec3_random_unit();
 vec3 vec3_random_unit_hemisphere( vec3 *normal );

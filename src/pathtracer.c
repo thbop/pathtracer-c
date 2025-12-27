@@ -22,6 +22,8 @@
 
 #include "stdio.h"
 #include "float.h"
+#include "string.h"
+#include "stdlib.h"
 
 #include "SDL3/SDL.h"
 
@@ -35,15 +37,18 @@
 #include "shape.h"
 
 #if __INTELLISENSE__
-    #define constexpr // Intellisense doesn't like the c23 standard
+    #define constexpr const // Intellisense doesn't like the c23 standard
 #endif
 
 #define WINDOW_WIDTH        1280 // Resolution
 #define WINDOW_HEIGHT       720
 #define RENDER_WIDTH        1280 // Upscaled to window size
 #define RENDER_HEIGHT       720
-#define PIXEL_SUBDIVISION   2    // Antialiasing/samples (1 = none)
+#define PIXEL_SUBDIVISION   4    // Antialiasing/samples (1 = none)
 #define RAY_MAX_BOUNCES     10
+
+#define DENOISE_VARIANCE_KERNEL_SIZE 8
+#define DENOISE_BLUR_POWER           100
 
 
 #define SDL_ASSERT( expr ) \
@@ -104,6 +109,122 @@ vec3 ray_hit( ray_path_t *ray_path ) {
     return sky_color( ray_path );
 }
 
+void *_get_pixel_f128( SDL_Surface *surface, int x, int y ) {
+    void *pixel = surface->pixels + surface->pitch * y + x * 16;
+    return pixel;
+}
+
+void _post_process_denoise_variance_kernel( SDL_Surface *surface, float *variance_buffer, int x, int y ) {
+    // Also divide by 4 since the max squared distance from one color to the next is 4
+    static constexpr float inv_kernel_squared = 1.0f / ( DENOISE_VARIANCE_KERNEL_SIZE*DENOISE_VARIANCE_KERNEL_SIZE );
+    static constexpr float normalizer         = inv_kernel_squared * 0.25f;
+
+    float *sample_pixel = _get_pixel_f128( surface, x, y );
+    vec3 sample_color = {
+        sample_pixel[0],
+        sample_pixel[1],
+        sample_pixel[2],
+    };
+
+    float variance_value = 0.0f;
+    for ( int j = -DENOISE_VARIANCE_KERNEL_SIZE>>1; j < DENOISE_VARIANCE_KERNEL_SIZE>>1; j++ ) {
+        for ( int i = -DENOISE_VARIANCE_KERNEL_SIZE>>1; i < DENOISE_VARIANCE_KERNEL_SIZE>>1; i++ ) {
+            int
+                sample_x =  SDL_clamp( x + i, 0, RENDER_WIDTH - 1 ),
+                sample_y =  SDL_clamp( y + j, 0, RENDER_HEIGHT - 1 );
+            float *kernel_pixel = _get_pixel_f128( surface, sample_x, sample_y );
+            vec3 kernel_color = {
+                kernel_pixel[0],
+                kernel_pixel[1],
+                kernel_pixel[2],
+            };
+
+            variance_value += vec3_squared_distance_to( &sample_color, &kernel_color );
+        }
+    }
+    // Normalize variance_value to be between 0.0f and 1.0f
+    variance_value *= normalizer;
+
+    *( variance_buffer + y * surface->w + x ) = variance_value;
+}
+
+vec3 _post_process_denoise_blur( SDL_Surface *surface, float *variance_buffer, int x, int y ) {
+    float variance = *( variance_buffer + y * surface->w + x ) * DENOISE_BLUR_POWER;
+    // printf("%f\n", variance);
+    int kernel_half_size = (int)( variance * 0.5f * DENOISE_VARIANCE_KERNEL_SIZE );
+    if ( kernel_half_size == 0 )
+        return *(vec3*)_get_pixel_f128( surface, x, y ); // Not completely safe...
+    
+
+    // 4*(x/2)^2 = x^2
+    const float inv_kernel_squared = 1.0f / ( kernel_half_size * kernel_half_size * 4.0f );
+
+    vec3 color = VEC3_ZERO;
+
+    for ( int j = -kernel_half_size; j < kernel_half_size; j++ ) {
+        for ( int i = -kernel_half_size; i < kernel_half_size; i++ ) {
+            int
+                sample_x =  SDL_clamp( x + i, 0, RENDER_WIDTH - 1 ),
+                sample_y =  SDL_clamp( y + j, 0, RENDER_HEIGHT - 1 );
+            
+            float *kernel_pixel = _get_pixel_f128( surface, sample_x, sample_y );
+            vec3 kernel_color = {
+                kernel_pixel[0],
+                kernel_pixel[1],
+                kernel_pixel[2],
+            };
+
+            color = vec3_add( &color, &kernel_color );
+        }
+    }
+
+    return vec3_mul_value( &color, inv_kernel_squared );
+    
+}
+
+void post_process_denoise( SDL_Surface *surface ) {
+    float *variance_buffer = malloc( surface->w * surface->h * sizeof(float) );
+    SDL_Surface *result = SDL_CreateSurface( surface->w, surface->h, surface->format );
+
+    for ( int j = 0; j < surface->h; j++ ) {
+        for ( int i = 0; i < surface->w; i++ ) {
+            _post_process_denoise_variance_kernel( surface, variance_buffer, i, j );
+            vec3 color = _post_process_denoise_blur( surface, variance_buffer, i, j );
+            SDL_WriteSurfacePixelFloat( result, i, j, color.x, color.y, color.z, 1.0f );
+        }
+    }
+
+    // Show variance_buffer
+    // for ( int j = 0; j < surface->h; j++ ) {
+    //     for ( int i = 0; i < surface->w; i++ ) {
+    //         float variance_value = *( variance_buffer + j * surface->w + i );
+    //         SDL_WriteSurfacePixelFloat( surface, i, j, variance_value, variance_value, variance_value, 1.0f );
+    //     }
+    // }
+
+    for ( int j = 0; j < surface->h; j++ ) {
+        for ( int i = 0; i < surface->w; i++ ) {
+            float *pixel = _get_pixel_f128( result, i, j );
+            vec3 color = {
+                pixel[0],
+                pixel[1],
+                pixel[2],
+            };
+            SDL_WriteSurfacePixelFloat( surface, i, j, color.x, color.y, color.z, 1.0f );
+        }
+    }
+    
+
+    free( variance_buffer );
+    SDL_DestroySurface( result );
+    
+}
+
+void post_process( SDL_Surface *surface ) {
+    post_process_denoise( surface );
+    SDL_SetAtomicInt( &state.render_progress, 25 );
+}
+
 static int SDLCALL render( void *surface ) {
     SDL_Surface *surf = surface;
     camera_t camera = {
@@ -134,10 +255,12 @@ static int SDLCALL render( void *surface ) {
         }
 
         // Update progress
-        SDL_SetAtomicInt( &state.render_progress, ( j * 25 ) / surf->h );
+        SDL_SetAtomicInt( &state.render_progress, ( j * 24 ) / surf->h );
     }
     
-    SDL_SetAtomicInt( &state.render_progress, 25 );
+    SDL_SetAtomicInt( &state.render_progress, 24 );
+
+    post_process( surf );
 
     return 0;
 }
@@ -154,7 +277,7 @@ void render_finish() {
 }
 
 void display_progress() {
-    int progress = SDL_GetAtomicInt( &state.render_progress );
+    int progress = SDL_GetAtomicInt( &state.render_progress ) << 1;
     if ( progress < 25 ) {
         printf( "\rProgress: <" );
         for ( int i = 0; i < 25; i++ ) {
@@ -182,7 +305,7 @@ int main() {
     ) );
     SDL_ASSERT( state.texture = SDL_CreateTexture(
         state.renderer,
-        SDL_PIXELFORMAT_RGBA8888,
+        SDL_PIXELFORMAT_RGBA128_FLOAT,
         SDL_TEXTUREACCESS_STREAMING,
         RENDER_WIDTH, RENDER_HEIGHT
     ) );

@@ -133,8 +133,18 @@ vec3 vec3_normalize( vec3 *a ) {
 
 // a points to b
 vec3 vec3_point_to( vec3 *start, vec3 *target ) {
-    vec3 difference = vec3_sub( target, start );
-    return vec3_normalize( &difference );
+    vec3 diff = vec3_sub( target, start );
+    return vec3_normalize( &diff );
+}
+
+float vec3_distance_to( vec3 *a, vec3 *b ) {
+    vec3 diff = vec3_sub( a, b );
+    return vec3_length( &diff );
+}
+
+float vec3_squared_distance_to( vec3 *a, vec3 *b ) {
+    vec3 diff = vec3_sub( a, b );
+    return vec3_square_length( &diff );
 }
 
 vec3 vec3_random() {

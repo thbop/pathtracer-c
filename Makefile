@@ -15,4 +15,6 @@ bin/%.o: src/%.c
 
 finish:
 	gcc $(wildcard bin/*.o) -o bin/pathtracer.exe $(CLIB)
-# 	rm bin/*.o
+
+clean:
+	rm bin/*.o
